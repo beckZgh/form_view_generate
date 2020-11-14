@@ -33,6 +33,5 @@ module.exports = {
         },
         { files: '*.ts', options: { parser: 'typescript' } },
         { files: '*.vue', options: { parser: 'vue' } },
-        { files: '*.md', options: { parser: 'markdown' } },
     ],
 };

@@ -44,7 +44,7 @@
                 <el-button icon="el-icon-video-play" size="mini" disabled @click="run">
                     运行
                 </el-button>
-                <el-button icon="el-icon-view" size="mini" disabled @click="showJson">
+                <el-button icon="el-icon-view" size="mini" @click="showJson">
                     查看json
                 </el-button>
                 <el-button icon="el-icon-download" size="mini" disabled @click="download">
@@ -106,6 +106,14 @@
             @tag-change="tagChange"
             @fetch-data="fetchData"
         />
+
+        <!-- 查看JSON -->
+        <json-drawer
+            size="60%"
+            :visible.sync="jsonDrawerVisible"
+            :json-str="JSON.stringify(formData)"
+            @refresh="refreshJson"
+        />
     </div>
 </template>
 
@@ -117,6 +125,7 @@ import { debounce } from 'throttle-debounce';
 // components
 import RightPanel from './RightPanel';
 import DraggableItem from './DraggableItem';
+import JsonDrawer from './components/JsonDrawer';
 
 // config
 import {
@@ -151,10 +160,15 @@ export default {
         draggable,
         DraggableItem,
         RightPanel,
+        JsonDrawer,
     },
 
     data() {
         return {
+            // 弹窗开关
+            jsonDrawerVisible: false,
+            formData: {},
+
             idGlobal,
             drawingData: {},
             drawingList: drawingDefalut,
@@ -413,11 +427,30 @@ export default {
             });
         },
 
+        // 克隆表单所有配置
+        AssembleFormData() {
+            this.formData = {
+                fields: deepClone(this.drawingList),
+                ...this.formConf,
+            };
+        },
+
         // 运行
         run() {},
 
         // 查看json
-        showJson() {},
+        showJson() {
+            this.AssembleFormData();
+            this.jsonDrawerVisible = true;
+        },
+
+        // 更新JSON
+        refreshJson(data) {
+            this.drawingList = deepClone(data.fields);
+
+            delete data.fields;
+            this.formConf = data;
+        },
 
         // 导出 Vue 文件
         download() {},

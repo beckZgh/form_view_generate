@@ -273,12 +273,15 @@
                             placeholder="最大行数"
                         />
                     </el-form-item>
+
                     <el-form-item v-if="isShowMin" label="最小值">
                         <el-input-number v-model="activeData.min" placeholder="最小值" />
                     </el-form-item>
+
                     <el-form-item v-if="isShowMax" label="最大值">
                         <el-input-number v-model="activeData.max" placeholder="最大值" />
                     </el-form-item>
+
                     <el-form-item v-if="activeData.height !== undefined" label="组件高度">
                         <el-input-number
                             v-model="activeData.height"
@@ -286,9 +289,11 @@
                             @input="changeRenderKey"
                         />
                     </el-form-item>
+
                     <el-form-item v-if="isShowStep" label="步长">
                         <el-input-number v-model="activeData.step" placeholder="步数" />
                     </el-form-item>
+
                     <el-form-item
                         v-if="activeData.__config__.tag === 'el-input-number'"
                         label="精度"
@@ -630,6 +635,7 @@
                             </el-radio-button>
                         </el-radio-group>
                     </el-form-item>
+
                     <el-form-item v-if="activeData['active-color'] !== undefined" label="开启颜色">
                         <el-color-picker v-model="activeData['active-color']" />
                     </el-form-item>
@@ -841,67 +847,9 @@
                         </div>
                     </template>
                 </el-form>
+
                 <!-- 表单属性 -->
-                <el-form v-show="currentTab === 'form'" size="small" label-width="90px">
-                    <el-form-item label="表单名">
-                        <el-input v-model="formConf.formRef" placeholder="请输入表单名（ref）" />
-                    </el-form-item>
-                    <el-form-item label="表单模型">
-                        <el-input v-model="formConf.formModel" placeholder="请输入数据模型" />
-                    </el-form-item>
-                    <el-form-item label="校验模型">
-                        <el-input v-model="formConf.formRules" placeholder="请输入校验模型" />
-                    </el-form-item>
-                    <el-form-item label="表单尺寸">
-                        <el-radio-group v-model="formConf.size">
-                            <el-radio-button label="medium">
-                                中等
-                            </el-radio-button>
-                            <el-radio-button label="small">
-                                较小
-                            </el-radio-button>
-                            <el-radio-button label="mini">
-                                迷你
-                            </el-radio-button>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="标签对齐">
-                        <el-radio-group v-model="formConf.labelPosition">
-                            <el-radio-button label="left">
-                                左对齐
-                            </el-radio-button>
-                            <el-radio-button label="right">
-                                右对齐
-                            </el-radio-button>
-                            <el-radio-button label="top">
-                                顶部对齐
-                            </el-radio-button>
-                        </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="标签宽度">
-                        <el-input
-                            v-model.number="formConf.labelWidth"
-                            type="number"
-                            placeholder="请输入标签宽度"
-                        />
-                    </el-form-item>
-                    <el-form-item label="栅格间隔">
-                        <el-input-number
-                            v-model="formConf.gutter"
-                            :min="0"
-                            placeholder="栅格间隔"
-                        />
-                    </el-form-item>
-                    <el-form-item label="禁用表单">
-                        <el-switch v-model="formConf.disabled" />
-                    </el-form-item>
-                    <el-form-item label="表单按钮">
-                        <el-switch v-model="formConf.formBtns" />
-                    </el-form-item>
-                    <el-form-item label="显示未选中组件边框">
-                        <el-switch v-model="formConf.unFocusedComponentBorder" />
-                    </el-form-item>
-                </el-form>
+                <form-option-view-config v-show="currentTab === 'form'" :form-conf="formConf" />
             </el-scrollbar>
         </div>
 
@@ -918,6 +866,7 @@
 // components
 import TreeNodeDialog from './components/TreeNodeDialog';
 import IconsDialog from './components/IconsDialog';
+import FormOptionViewConfig from './components/FormOptionViewConfig';
 
 // utils
 import { isArray } from 'util';
@@ -945,17 +894,21 @@ export default {
     components: {
         TreeNodeDialog,
         IconsDialog,
+        FormOptionViewConfig,
     },
+
     props: ['showField', 'activeData', 'formConf'],
-    
+
     data() {
         return {
             currentTab: 'field',
             currentNode: null,
-            dialogVisible: false,
-            iconsVisible: false,
             currentIconModel: null,
 
+            dialogVisible: false, // 选项弹窗开关
+            iconsVisible: false, // 图标弹窗开关
+
+            // 日期类型选项
             dateTypeOptions: [
                 {
                     label: '日(date)',
@@ -979,6 +932,7 @@ export default {
                 },
             ],
 
+            // 日期范围类型选项
             dateRangeTypeOptions: [
                 {
                     label: '日期范围(daterange)',
@@ -994,6 +948,7 @@ export default {
                 },
             ],
 
+            // 颜色类型选项
             colorFormatOptions: [
                 {
                     label: 'hex',
@@ -1017,6 +972,7 @@ export default {
                 },
             ],
 
+            // 排版类型选项
             justifyOptions: [
                 {
                     label: 'start',
@@ -1049,6 +1005,7 @@ export default {
         };
     },
     computed: {
+        // 文档链接
         documentLink() {
             return (
                 this.activeData.__config__.document ||
@@ -1098,6 +1055,7 @@ export default {
             return ['el-input-number', 'el-slider'].indexOf(this.activeTag) > -1;
         },
     },
+
     watch: {
         formConf: {
             handler(val) {
@@ -1106,6 +1064,7 @@ export default {
             deep: true,
         },
     },
+
     methods: {
         addReg() {
             this.activeData.__config__.regList.push({
@@ -1279,12 +1238,14 @@ export default {
     right: 0;
     top: 0;
     padding-top: 3px;
+
     .field-box {
         position: relative;
-        height: calc(100vh - 42px);
+        height: calc(100vh - 50px);
         box-sizing: border-box;
         overflow: hidden;
     }
+
     .el-scrollbar {
         height: 100%;
     }

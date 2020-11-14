@@ -33,7 +33,7 @@ const components = {
 
 // 包装模板
 const layouts = {
-    colFormItem(h, currentItem, index, list) {
+    colFormItem(h, currentItem) {
         const { activeItem } = this.$listeners;
         const config = currentItem.__config__;
 
@@ -74,7 +74,7 @@ const layouts = {
         );
     },
 
-    rowFormItem(h, currentItem, index, list) {
+    rowFormItem(h, currentItem) {
         const { activeItem } = this.$listeners;
         const config = currentItem.__config__;
         const className =
@@ -119,7 +119,7 @@ const layouts = {
         );
     },
 
-    raw(h, currentItem, index, list) {
+    raw(h, currentItem) {
         const config = currentItem.__config__;
         const child = renderChildren.apply(this, arguments);
         return (
@@ -137,7 +137,7 @@ const layouts = {
 };
 
 // 渲染子组件
-function renderChildren(h, currentItem, index, list) {
+function renderChildren(h, currentItem) {
     const config = currentItem.__config__;
     if (!Array.isArray(config.children)) return null;
 
