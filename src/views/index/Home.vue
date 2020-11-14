@@ -41,20 +41,19 @@
         <!-- 主区域 -->
         <div class="center-board">
             <div class="action-bar">
-                <el-button icon="el-icon-video-play" size="mini" disabled @click="run">
+                <el-button icon="el-icon-video-play" size="mini" @click="run">
                     运行
                 </el-button>
                 <el-button icon="el-icon-view" size="mini" @click="showJson">
                     查看json
                 </el-button>
-                <el-button icon="el-icon-download" size="mini" disabled @click="download">
+                <el-button icon="el-icon-download" size="mini" @click="download">
                     导出vue文件
                 </el-button>
                 <el-button
                     class="copy-btn-main"
                     icon="el-icon-document-copy"
                     size="mini"
-                    disabled
                     @click="copy"
                 >
                     复制代码
@@ -107,6 +106,14 @@
             @fetch-data="fetchData"
         />
 
+        <!-- 运行代码 -->
+        <form-drawer
+            :visible.sync="formDrawerVisible"
+            :form-data="formData"
+            size="100%"
+            :generate-conf="generateConf"
+        />
+
         <!-- 查看JSON -->
         <json-drawer
             size="60%"
@@ -114,6 +121,17 @@
             :json-str="JSON.stringify(formData)"
             @refresh="refreshJson"
         />
+
+        <!-- 代码类型选择 -->
+        <code-type-dialog
+            :visible.sync="dialogVisible"
+            title="选择生成类型"
+            :show-file-name="showFileName"
+            @confirm="generate"
+        />
+
+        <!-- 用于拷贝代码 -->
+        <input id="copyNode" type="hidden" />
     </div>
 </template>
 
@@ -121,11 +139,14 @@
 // lib
 import draggable from 'vuedraggable';
 import { debounce } from 'throttle-debounce';
+import ClipboardJS from 'clipboard';
 
 // components
 import RightPanel from './RightPanel';
 import DraggableItem from './DraggableItem';
 import JsonDrawer from './components/JsonDrawer';
+import FormDrawer from './components/FormDrawer';
+import CodeTypeDialog from './components/CodeTypeDialog';
 
 // config
 import {
@@ -135,9 +156,14 @@ import {
     formConf,
 } from '@/components/generator/config';
 import drawingDefalut from '@/components/generator/drawingDefalut'; // 默认展示配置
+import { makeUpHtml, vueTemplate, vueScript, cssStyle } from '@/components/generator/html';
+import { makeUpJs } from '@/components/generator/js';
+import { makeUpCss } from '@/components/generator/css';
 
 // utils
-import { deepClone } from '@/utils/index';
+import { deepClone, titleCase, beautifierConf } from '@/utils/index';
+import { saveAs } from 'file-saver';
+import loadBeautifier from '@/utils/loadBeautifier';
 import {
     getDrawingList,
     saveDrawingList,
@@ -146,6 +172,7 @@ import {
     getFormConf,
 } from '@/utils/db';
 
+let beautifier;
 let oldActiveId; // 旧的激活控件编码
 let tempActiveData; // 拖拽中的控件生成数据,用于拖拽放下时进行配置
 
@@ -161,13 +188,20 @@ export default {
         DraggableItem,
         RightPanel,
         JsonDrawer,
+        FormDrawer,
+        CodeTypeDialog,
     },
 
     data() {
         return {
             // 弹窗开关
+            showFileName: false,
+            dialogVisible: false,
+
+            formDrawerVisible: false,
+            generateConf: null, // 生成代码
             jsonDrawerVisible: false,
-            formData: {},
+            formData: {}, // 更新JSON编辑器数据
 
             idGlobal,
             drawingData: {},
@@ -248,6 +282,26 @@ export default {
 
         // 设置表单配置
         if (formConfInDB) this.formConf = formConfInDB;
+
+        loadBeautifier(btf => {
+            beautifier = btf;
+        });
+
+        const clipboard = new ClipboardJS('#copyNode', {
+            text: () => {
+                const codeStr = this.generateCode();
+                this.$notify({
+                    title: '成功',
+                    message: '代码已复制到剪切板，可粘贴。',
+                    type: 'success',
+                });
+                return codeStr;
+            },
+        });
+
+        clipboard.on('error', () => {
+            this.$message.error('代码复制失败');
+        });
     },
 
     methods: {
@@ -435,9 +489,6 @@ export default {
             };
         },
 
-        // 运行
-        run() {},
-
         // 查看json
         showJson() {
             this.AssembleFormData();
@@ -453,10 +504,60 @@ export default {
         },
 
         // 导出 Vue 文件
-        download() {},
+        download() {
+            this.dialogVisible = true;
+            this.showFileName = true;
+            this.operationType = 'download';
+        },
+
+        // 运行
+        run() {
+            this.dialogVisible = true;
+            this.showFileName = false;
+            this.operationType = 'run';
+        },
 
         // 复制代码
-        copy() {},
+        copy() {
+            this.dialogVisible = true;
+            this.showFileName = false;
+            this.operationType = 'copy';
+        },
+
+        // 生成代码
+        generate(data) {
+            const func = this[`exec${titleCase(this.operationType)}`];
+            this.generateConf = data;
+            func && func(data);
+        },
+
+        // 生成代码
+        generateCode() {
+            const { type } = this.generateConf;
+            this.AssembleFormData();
+            const script = vueScript(makeUpJs(this.formData, type));
+            const html = vueTemplate(makeUpHtml(this.formData, type));
+            const css = cssStyle(makeUpCss(this.formData));
+            return beautifier.html(html + script + css, beautifierConf.html);
+        },
+
+        // 执行运行代码
+        execRun() {
+            this.AssembleFormData();
+            this.formDrawerVisible = true;
+        },
+
+        // 执行下载
+        execDownload(data) {
+            const codeStr = this.generateCode();
+            const blob = new Blob([codeStr], { type: 'text/plain;charset=utf-8' });
+            saveAs(blob, data.fileName);
+        },
+
+        // 执行拷贝
+        execCopy() {
+            document.getElementById('copyNode').click();
+        },
     },
 };
 </script>

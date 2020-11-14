@@ -40,6 +40,8 @@ export const beautifierConf = {
     },
 };
 
+export const exportDefault = 'export default ';
+
 // 深拷贝对象
 export function deepClone(obj) {
     const _toString = Object.prototype.toString;
@@ -86,4 +88,9 @@ export function deepClone(obj) {
 
 export function isNumberStr(str) {
     return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str);
+}
+
+// 首字母大小
+export function titleCase(str) {
+    return str.replace(/( |^)[a-z]/g, L => L.toUpperCase());
 }
